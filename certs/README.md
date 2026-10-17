@@ -1,0 +1,1 @@
+Guardar aquí ca.crt obtenido desde los ajustes de conexión/SSL de tu proyecto Supabase. Debe ser la CA que valida el host elegido (directo o pooler Session). No usar un certificado de otro proyecto ni desactivar verify-full. La CA no es una clave privada. El kit no incluye certificados inventados.

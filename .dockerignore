@@ -1,0 +1,5 @@
+.env
+backups/
+certs/
+.git/
+__pycache__/

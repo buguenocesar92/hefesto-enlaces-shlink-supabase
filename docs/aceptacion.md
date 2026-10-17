@@ -1,0 +1,14 @@
+# Aceptación pendiente en VPS
+- [ ] Build correcto, preflight SQL y PHP finalizan; CA/host/rol verificados con TLS.
+- [ ] Una CA incorrecta causa fallo de conexión; no existe fallback sin verificar.
+- [ ] Data API desactivada; anon/authenticated no acceden a las tablas.
+- [ ] API rechaza creación/consulta privada sin clave y con clave inválida.
+- [ ] Panel se configura manualmente; no hay API key en servers.json ni variables estáticas.
+- [ ] HTTPS/CORS/proxy correctos; sin puertos host públicos del bootstrap.
+- [ ] Crear slug, visitar, editar destino y volver a visitar: destino actualizado.
+- [ ] Etiquetas y fechas de vigencia funcionan según configuración del enlace.
+- [ ] Visitas se registran sin IP/referrer/UA; se distinguen pruebas y tráfico real.
+- [ ] QR externo con URL corta sigue funcionando tras editar destino.
+- [ ] Reinicio/recreación mantiene datos; límites y latencia medidos.
+- [ ] Backup/restore reales comprobados en proyecto vacío, incluyendo dominios y claves.
+- [ ] Rotación/revocación de clave comprobada; propietario de dominio y plan de continuidad definidos.

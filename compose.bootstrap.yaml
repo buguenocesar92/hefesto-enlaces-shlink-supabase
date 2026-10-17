@@ -1,0 +1,8 @@
+services:
+  app:
+    ports: [127.0.0.1:8092:8080]
+    environment:
+      INITIAL_API_KEY: ${INITIAL_API_KEY:?Generar .env}
+      CORS_ALLOW_ORIGIN: http://localhost:8093
+  panel:
+    ports: [127.0.0.1:8093:8080]
