@@ -67,6 +67,32 @@ render() {
 }
 
 # Reglas del contrato 1 (escape al host) y 2 (nombres estables sin forzar).
+
+# Detecta, por servicio sin 'profiles', cualquier bind que apunte fuera del repo
+# o a /var/run/docker.sock. Acepta binds dentro del repo o al propio repo root
+# (ej. `.:/app` resuelve a REPO_ROOT y es válido). Imprime una línea por servicio
+# con un bind vetado; vacio si todos cumplen.
+bind_violations() {
+    local json="$1"
+    printf '%s' "$json" | jq -r --arg repo "$REPO_ROOT" '
+        (.services // {}) as $services
+        | $services | to_entries
+        | map(select((.value.profiles // []) | length == 0))
+        | .[]
+        | .key as $svc
+        | .value
+        | ((.volumes // []) | map(
+            if type == "string" then split(":")[0]
+            elif type == "object" then (.source // "")
+            else "" end
+            | select(. != "" and (
+                test("^/var/run/docker\\.sock")
+                or (test("^/") and ((. == $repo or startswith($repo + "/")) | not))
+            ))
+        ) | if length > 0 then $svc else empty end)
+    '
+}
+
 validate_contract() {
     local label="$1" json="$2" compose="$3"
     local rc=0
@@ -102,7 +128,7 @@ validate_contract() {
                 else "" end
                 | select(. != "" and (
                     test("^/var/run/docker\\.sock")
-                    or (test("^/") and (. != $repo and (. | startswith($repo + "/")) | not))
+                    or (test("^/") and ((. == $repo or startswith($repo + "/")) | not))
                 ))
             ) | if length > 0 then "bind-fuera-del-repo-o-docker.sock" else empty end)
         | "\($svc):\(.)"
@@ -189,4 +215,6 @@ main() {
     echo "OK: compose Coolify-ready"
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
