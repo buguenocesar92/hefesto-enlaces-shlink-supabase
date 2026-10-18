@@ -71,11 +71,9 @@ validate_contract() {
     local label="$1" json="$2"
     local rc=0
 
-    # 1. Raíz sin 'name:' fijo (Coolify asigna el nombre del proyecto).
-    if [[ "$(printf '%s' "$json" | jq -r 'has("name") and (.name | type) == "string"')" == "true" ]]; then
-        local n
-        n="$(printf '%s' "$json" | jq -r '.name')"
-        echo "FAIL ${label}: raiz declara 'name:' fijo ('${n}'); Coolify asigna el nombre del proyecto"
+    # 1. Raíz sin 'name:' fijo explicit. Sin declaracion, docker compose deriva del directorio y Coolify sobreescribe.
+    if grep -qE '^name[[:space:]]*:' "$compose"; then
+        echo "FAIL ${label}: raiz declara 'name:' fijo en compose.yaml; Coolify asigna el nombre del proyecto"
         rc=1
     fi
 
@@ -137,8 +135,9 @@ validate_supabase_pg() {
         echo "FAIL ${label} (supabase-pg): servicio 'app' no expone DB_NAME=mvp_prueba en environment; falta variable DB_NAME con default postgres"
         rc=1
     fi
-    if ! grep -q 'DB_SSLMODE=disable' <<<"$app_env"; then
-        echo "FAIL ${label} (supabase-pg): servicio 'app' no expone DB_SSLMODE=disable en environment; falta variable DB_SSLMODE con default verify-full"
+    # DB_SSLMODE puede fluir a PGSSLMODE (libpq) o aparecer como DB_SSLMODE (Doctrine); el contrato lo acepta en cualquiera de las dos formas.
+    if ! grep -qE '(PGSSLMODE|DB_SSLMODE)=disable' <<<"$app_env"; then
+        echo "FAIL ${label} (supabase-pg): servicio 'app' no refleja DB_SSLMODE=disable (PGSSLMODE o DB_SSLMODE); falta variable DB_SSLMODE con default verify-full"
         rc=1
     fi
     return $rc

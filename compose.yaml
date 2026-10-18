@@ -1,12 +1,11 @@
-name: ${COMPOSE_PROJECT_NAME:?Ejecutar configure.py}
 x-db-env: &db-env
   PGHOST: ${POSTGRES_HOST:?Configurar host}
   PGPORT: '5432'
-  PGDATABASE: postgres
+  PGDATABASE: ${DB_NAME:-postgres}
   PGUSER: ${POSTGRES_USERNAME:?Configurar usuario}
   PGPASSWORD: ${POSTGRES_PASSWORD:?Configurar clave}
-  PGSSLMODE: verify-full
-  PGSSLROOTCERT: /run/supabase/ca.crt
+  PGSSLMODE: ${DB_SSLMODE:-verify-full}
+  PGSSLROOTCERT: ${DB_SSLROOTCERT:-/run/supabase/ca.crt}
   PGCONNECT_TIMEOUT: '15'
 services:
   preflight:
@@ -27,15 +26,15 @@ services:
       preflight: {condition: service_completed_successfully}
     environment:
       DB_DRIVER: postgres
-      DB_NAME: postgres
+      DB_NAME: ${DB_NAME:-postgres}
       DB_HOST: ${POSTGRES_HOST:?Configurar host}
       DB_PORT: '5432'
       DB_USER: ${POSTGRES_USERNAME:?Configurar usuario}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?Configurar clave}
       # TLS is explicitly enforced by zz-hefesto.global.php at DBAL connection level.
       DB_USE_ENCRYPTION: 'false'
-      PGSSLMODE: verify-full
-      PGSSLROOTCERT: /run/supabase/ca.crt
+      PGSSLMODE: ${DB_SSLMODE:-verify-full}
+      PGSSLROOTCERT: ${DB_SSLROOTCERT:-/run/supabase/ca.crt}
       PGCONNECT_TIMEOUT: '15'
       DEFAULT_DOMAIN: ${LINKS_HOST:?Configurar dominio corto}
       IS_HTTPS_ENABLED: 'true'
@@ -53,6 +52,7 @@ services:
       WEB_WORKER_NUM: '2'
       TASK_WORKER_NUM: '1'
       SKIP_INITIAL_GEOLITE_DOWNLOAD: 'true'
+      INITIAL_API_KEY: ${INITIAL_API_KEY:-}
     volumes: [./certs:/run/supabase:ro]
     expose: ['8080']
     healthcheck:

@@ -18,6 +18,21 @@ ssh -L 8092:127.0.0.1:8092 -L 8093:127.0.0.1:8093 usuario@servidor
 ```
 Abrir http://localhost:8093, agregar servidor http://localhost:8092 y la INITIAL_API_KEY de .env. Los enlaces generados usarán go.tudominio.cl; solo resolverán públicamente al configurar DNS/HTTPS. Seguir docs/despliegue.md para retirar bootstrap y publicar.
 
+## Despliegue en Coolify (MVP Hefesto)
+Coolify importa este directorio como Compose, construye el Dockerfile y enruta los dominios vía Traefik. El compose se mantiene sin `ports:`, `container_name:`, `privileged:`, ni binds fuera del repo: el enrutamiento es solo del proxy. Para auditarlo antes de desplegar: `bash scripts/coolify-check.sh`.
+
+Variables adicionales (todas con default funcional para no romper el uso original):
+
+| Variable | Default | Para qué sirve en Coolify |
+|---|---|---|
+| `DB_NAME` | `postgres` | Nombre de la base dedicada (`mvp_<slug>`) en el Postgres compartido. |
+| `DB_SSLMODE` | `verify-full` | Relaja TLS cuando la red interna de Coolify no exige verificar CA (`disable` para localhost/VPN, `require` para redis/pooler sin CA propia). |
+| `DB_SSLROOTCERT` | `/run/supabase/ca.crt` | Ruta del CA. Solo se exige cuando `DB_SSLMODE=verify-full`; en cualquier otro modo `certs/ca.crt` puede omitirse. |
+| `INITIAL_API_KEY` | _(vacío)_ | Si está vacío, genera la primera clave con `shlink api-key:generate` dentro del contenedor y guárdala en un gestor antes de retirar el bootstrap. Si trae valor, Shlink la usa como clave inicial. |
+| `TRUSTED_PROXIES` | `127.0.0.1` | Cambia al CIDR de la red de Traefik en Coolify (p. ej. `172.16.0.0/12`) para que Shlink preserve `X-Forwarded-For`. |
+
+Notas: `compose.bootstrap.yaml` es override de desarrollo local (SSH + puertos 8092/8093); no lo apliques en Coolify. Las preflights que exigen proyecto dedicado (`SUPABASE_DEDICATED_CONFIRMED=true`) y Data API apagada (`SUPABASE_DATA_API_DISABLED=true`) se mantienen; configura ambas en `true` en Coolify cuando termines los pasos de `docs/supabase.md`.
+
 ## Alcance de la validación
 Compatibilidad PostgreSQL y configuración TLS revisadas contra documentación/código upstream. No se ha conectado a un proyecto Supabase real, construido la imagen ni probado redirecciones/estadísticas en VPS. El kit no está desplegado y la aceptación sigue pendiente.
 
