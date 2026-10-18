@@ -68,7 +68,7 @@ render() {
 
 # Reglas del contrato 1 (escape al host) y 2 (nombres estables sin forzar).
 validate_contract() {
-    local label="$1" json="$2"
+    local label="$1" json="$2" compose="$3"
     local rc=0
 
     # 1. Raíz sin 'name:' fijo explicit. Sin declaracion, docker compose deriva del directorio y Coolify sobreescribe.
@@ -95,14 +95,14 @@ validate_contract() {
             (((.network_mode // "") == "host") | if . then "network_mode=host" else empty end),
             (((.pid // "") == "host") | if . then "pid=host" else empty end),
             (((.ipc // "") == "host") | if . then "ipc=host" else empty end),
-            (((.security_opt // []) | any(. == "unconfined")) | if . then "security_opt=unconfined" else empty end),
+            (((.security_opt // []) | any(test("unconfined"))) | if . then "security_opt=unconfined" else empty end),
             ((.volumes // []) | map(
                 if type == "string" then split(":")[0]
                 elif type == "object" then (.source // "")
                 else "" end
                 | select(. != "" and (
                     test("^/var/run/docker\\.sock")
-                    or (test("^/") and (. | startswith($repo) | not))
+                    or (test("^/") and (. != $repo and (. | startswith($repo + "/")) | not))
                 ))
             ) | if length > 0 then "bind-fuera-del-repo-o-docker.sock" else empty end)
         | "\($svc):\(.)"
@@ -135,9 +135,14 @@ validate_supabase_pg() {
         echo "FAIL ${label} (supabase-pg): servicio 'app' no expone DB_NAME=mvp_prueba en environment; falta variable DB_NAME con default postgres"
         rc=1
     fi
-    # DB_SSLMODE puede fluir a PGSSLMODE (libpq) o aparecer como DB_SSLMODE (Doctrine); el contrato lo acepta en cualquiera de las dos formas.
-    if ! grep -qE '(PGSSLMODE|DB_SSLMODE)=disable' <<<"$app_env"; then
-        echo "FAIL ${label} (supabase-pg): servicio 'app' no refleja DB_SSLMODE=disable (PGSSLMODE o DB_SSLMODE); falta variable DB_SSLMODE con default verify-full"
+    # DB_SSLMODE debe llegar al servicio 'app' como DB_SSLMODE (lo lee ops/zz-hefesto.global.php
+    # via getenv()); PGSSLMODE=disable se acepta ademas porque es la copia libpq del mismo valor.
+    if ! grep -qE 'DB_SSLMODE=disable' <<<"$app_env"; then
+        echo "FAIL ${label} (supabase-pg): servicio 'app' no expone DB_SSLMODE=disable; PHP no ve la variable si solo llega como PGSSLMODE"
+        rc=1
+    fi
+    if ! grep -qE 'PGSSLMODE=disable' <<<"$app_env"; then
+        echo "FAIL ${label} (supabase-pg): servicio 'app' no expone PGSSLMODE=disable; libpq no honrara DB_SSLMODE=disable"
         rc=1
     fi
     return $rc
@@ -170,7 +175,7 @@ main() {
             rc=1
             continue
         fi
-        if ! validate_contract "$label" "$json"; then
+        if ! validate_contract "$label" "$json" "$compose"; then
             rc=1
         fi
         if ! validate_supabase_pg "$label" "$json"; then
