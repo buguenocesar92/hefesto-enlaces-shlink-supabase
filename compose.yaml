@@ -4,6 +4,10 @@ x-db-env: &db-env
   PGDATABASE: ${DB_NAME:-postgres}
   PGUSER: ${POSTGRES_USERNAME:?Configurar usuario}
   PGPASSWORD: ${POSTGRES_PASSWORD:?Configurar clave}
+  # DB_SSLMODE/DB_SSLROOTCERT se exponen para que preflight y el chequeo PHP los lean
+  # via getenv(); PGSSLMODE/PGSSLROOTCERT siguen siendo la copia libpq del mismo valor.
+  DB_SSLMODE: ${DB_SSLMODE:-verify-full}
+  DB_SSLROOTCERT: ${DB_SSLROOTCERT:-/run/supabase/ca.crt}
   PGSSLMODE: ${DB_SSLMODE:-verify-full}
   PGSSLROOTCERT: ${DB_SSLROOTCERT:-/run/supabase/ca.crt}
   PGCONNECT_TIMEOUT: '15'
