@@ -37,6 +37,8 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:?Configurar clave}
       # TLS is explicitly enforced by zz-hefesto.global.php at DBAL connection level.
       DB_USE_ENCRYPTION: 'false'
+      DB_SSLMODE: ${DB_SSLMODE:-verify-full}
+      DB_SSLROOTCERT: ${DB_SSLROOTCERT:-/run/supabase/ca.crt}
       PGSSLMODE: ${DB_SSLMODE:-verify-full}
       PGSSLROOTCERT: ${DB_SSLROOTCERT:-/run/supabase/ca.crt}
       PGCONNECT_TIMEOUT: '15'
