@@ -33,6 +33,13 @@ Variables adicionales (todas con default funcional para no romper el uso origina
 
 Notas: `compose.bootstrap.yaml` es override de desarrollo local (SSH + puertos 8092/8093); no lo apliques en Coolify. Las preflights que exigen proyecto dedicado (`SUPABASE_DEDICATED_CONFIRMED=true`) y Data API apagada (`SUPABASE_DATA_API_DISABLED=true`) se mantienen; configura ambas en `true` en Coolify cuando termines los pasos de `docs/supabase.md`.
 
+Pasos operativos de la base dedicada:
+
+1. Crea la base de datos con el mismo slug del proyecto Coolify, por ejemplo `mvp_coolify`, conectada al Postgres compartido de Supabase (no a la base `postgres`).
+2. `POSTGRES_USERNAME` debe corresponder al rol `shlink_app` (es lo que `ops/preflight.sql` y `ops/check-config.php` validan).
+3. Ejecuta `sql/01-supabase-app.sql` **en esa base** (`psql ... -d mvp_<slug>`). El script está escrito contra `DATABASE postgres`; reemplaza las dos ocurrencias de `postgres` por `$DB_NAME` (`mvp_<slug>`) en `sql/01-supabase-app.sql:11` (`GRANT CONNECT ON DATABASE postgres`) y en `sql/01-supabase-app.sql:13` (`ALTER ROLE shlink_app IN DATABASE postgres SET search_path`). El resto del script es por esquema `public` y no depende del nombre de la base.
+4. Después de aplicarlo, fija `DB_NAME=mvp_<slug>` en las variables de Coolify y mantén `DB_SSLMODE=verify-full` salvo que la red interna no entregue CA propia (en ese caso, `DB_SSLMODE=require` o `disable` y deja `DB_SSLROOTCERT` con el default del kit).
+
 ## Alcance de la validación
 Compatibilidad PostgreSQL y configuración TLS revisadas contra documentación/código upstream. No se ha conectado a un proyecto Supabase real, construido la imagen ni probado redirecciones/estadísticas en VPS. El kit no está desplegado y la aceptación sigue pendiente.
 
