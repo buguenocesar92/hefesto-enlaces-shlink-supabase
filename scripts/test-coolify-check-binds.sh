@@ -12,6 +12,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Source el validador (source-guard evita que main() se ejecute al cargar).
 # shellcheck source=coolify-check.sh
+# shellcheck source-path=SCRIPTDIR
 source "$SCRIPT_DIR/coolify-check.sh"
 
 assert_empty() {

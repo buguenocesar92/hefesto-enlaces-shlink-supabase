@@ -197,7 +197,8 @@ main() {
         json="$(printf '%s' "$output" | sed -n '/^{/,$p')"
         if [[ -z "$json" ]] || ! printf '%s' "$json" | jq . >/dev/null 2>&1; then
             echo "FAIL ${label}: docker compose config no pudo renderizar:"
-            sed 's/^/    /' <<<"$output"
+            indentado="${output//$'\n'/$'\n    '}"
+            printf '    %s\n' "$indentado"
             rc=1
             continue
         fi
